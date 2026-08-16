@@ -1,0 +1,76 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+// Build output is churn-heavy (many small files rewritten per build) and OneDrive's sync
+// client races Gradle to lock/scan those files, causing sporadic AccessDeniedExceptions.
+// Source stays under OneDrive (synced/backed up); build output moves outside sync scope.
+layout.buildDirectory.set(new File(System.getProperty("user.home"), ".gradle-builds/aechronishitboxes"))
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	maven { url "https://maven.fabricmc.net/" }
+	maven { url "https://api.modrinth.com/maven" }
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		"aechronishitboxes" {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	implementation "maven.modrinth:cloth-config:${project.cloth_config_version}"
+	implementation "maven.modrinth:modmenu:${project.mod_menu_version}"
+
+	implementation "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
+	include "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
+	annotationProcessor "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	withSourcesJar()
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.archives_base_name}" }
+	}
+}
+
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			from components.java
+		}
+	}
+}

@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.aechronis.hitboxes.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "EntityHitboxDebugRendererMixin",
+    "MinecraftClientMixin",
+    "RenderChunkBorderMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

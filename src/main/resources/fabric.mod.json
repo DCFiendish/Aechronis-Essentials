@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "aechronishitboxes",
+	"version": "${version}",
+
+	"name": "Aechronis Hitboxes",
+	"description": "Colors player and entity hitboxes by relationship (town/nation/ally/enemy) using Aechronis's Nodes map API. A stripped-down, from-source GPLv3 port of the hitbox-coloring feature from oreotrollturbo's CrusalisUtils (itself a fork of Hitbox+), retargeted from Crusalis to Aechronis.",
+	"authors": [],
+	"contact": {},
+
+	"license": "GPL-3.0-or-later",
+
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"net.aechronis.hitboxes.AechronisHitboxes"
+		],
+		"modmenu": [
+			"net.aechronis.hitboxes.config.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		"aechronishitboxes.mixins.json"
+	],
+
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*",
+		"cloth-config": "*"
+	},
+	"recommends": {
+		"modmenu": "*"
+	}
+}
