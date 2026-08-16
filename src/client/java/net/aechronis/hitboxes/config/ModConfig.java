@@ -93,6 +93,10 @@ public class ModConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     public String mapLink = "https://map.aechronis.net";
 
+    @ConfigEntry.Category(value = "aechronis")
+    @ConfigEntry.Gui.Tooltip
+    public boolean autoTSpawn = false;
+
     public static class MiscEntityDropdown {
         public boolean isEnabled = false;
 

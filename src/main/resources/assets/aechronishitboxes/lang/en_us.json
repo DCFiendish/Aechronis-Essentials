@@ -58,5 +58,8 @@
   "text.autoconfig.aechronishitboxes.option.teamColourPicker.enemy": "Enemy nation color",
   "text.autoconfig.aechronishitboxes.option.teamColourPicker.neutral": "Neutral color",
 
-  "text.autoconfig.aechronishitboxes.option.mapLink": "Aechronis map base URL"
+  "text.autoconfig.aechronishitboxes.option.mapLink": "Aechronis map base URL",
+
+  "text.autoconfig.aechronishitboxes.option.autoTSpawn": "Auto /t spawn on respawn",
+  "text.autoconfig.aechronishitboxes.option.autoTSpawn.tooltip": "Automatically sends '/t spawn' in chat the moment you respawn after dying."
 }

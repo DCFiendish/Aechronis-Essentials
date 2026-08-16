@@ -29,6 +29,8 @@ Aechronis's own Nodes API. It is **not** a full port of CrusalisUtils - see
   relation pipeline (so ally/enemy/town land shows up at a glance), driven by
   `https://map.aechronis.net/nodes/world.json`.
 - Full settings screen via Mod Menu + Cloth Config.
+- Optional: automatically sends `/t spawn` in chat the instant you respawn after dying
+  (off by default - toggle in config).
 
 The mod only activates when you're connected to an Aechronis server (`*.aechronis.net`) -
 it's inert everywhere else.
@@ -67,7 +69,6 @@ isn't well documented, so if you're used to CrusalisUtils, this is what you'd be
   *config* is kept - it's just config-file/GUI-only in this port, with no command or
   keybind to populate it.)
 - **Update checker** - pinging Modrinth on the title screen for update notifications.
-- **Auto `/t spawn` on respawn.**
 - **JourneyMap integration.**
 
 ## Changes from upstream behavior
@@ -87,6 +88,9 @@ isn't well documented, so if you're used to CrusalisUtils, this is what you'd be
 - `towns.json` is polled every 2 minutes (upstream: 1 hour); `world.json` (needed for chunk
   borders, ~16MB) is polled every 10 minutes since land claims change far less often than
   town/nation membership.
+- **Bug fix**: upstream's auto-`/t spawn`-on-respawn feature latched a "just respawned" flag
+  that was never reset, so it only ever fired once per game session (the first death only).
+  This port resets the flag on every death, so it fires on every respawn as intended.
 
 ## Building
 
