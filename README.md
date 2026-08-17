@@ -1,4 +1,4 @@
-# Aechronis Hitboxes
+# Aechronis Essentials
 
 A Fabric client mod for Minecraft 26.2 that colors player and entity hitboxes by
 relationship - town, nation, ally, enemy, or neutral - using
