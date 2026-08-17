@@ -2,7 +2,6 @@ package net.aechronis.hitboxes.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import me.shedaniel.autoconfig.AutoConfig;
-import net.aechronis.hitboxes.AechronisHitboxes;
 import net.aechronis.hitboxes.config.ModConfig;
 import net.aechronis.hitboxes.data.NodeRelation;
 import net.aechronis.hitboxes.data.RelationResolver;
@@ -10,6 +9,7 @@ import net.aechronis.hitboxes.data.TerritoryData;
 import net.aechronis.hitboxes.hitbox.ColorUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.debug.ChunkBorderRenderer;
+import net.minecraft.core.SectionPos;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.level.ChunkPos;
 import org.objectweb.asm.Opcodes;
@@ -33,8 +33,6 @@ public class RenderChunkBorderMixin {
     private TerritoryData aechronisHitboxes$lastTerritory;
     @Unique
     private ChunkPos aechronisHitboxes$lastChunk;
-    @Unique
-    private long aechronisHitboxes$lastPillarLogNanos = 0L;
 
     @Unique
     private int aechronisHitboxes$computeColor(int defaultColor) {
@@ -107,6 +105,10 @@ public class RenderChunkBorderMixin {
     // GETSTATIC against. Redirecting that call instead, and - unlike the other three redirects,
     // which reuse the player's own current chunk - resolving each pillar's own chunk from its
     // local grid offset, since these pillars span several chunks around the player, not just one.
+    // Capturing the method's single SectionPos local (unambiguous, no ordinal needed) rather than
+    // the two double locals it derives its X/Z from directly - ordinal-based @Local capture of
+    // consecutive doubles (each consuming two local-variable slots) landed on garbage data for
+    // the second one in practice, even though the bytecode's slot layout looked correct.
     @Redirect(
             method = "emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V",
             at = @At(
@@ -116,8 +118,7 @@ public class RenderChunkBorderMixin {
     )
     private int aechronisHitboxes$overrideCornerPillar(
             float alpha, float red, float green, float blue,
-            @Local(ordinal = 0) double originBlockX,
-            @Local(ordinal = 1) double originBlockZ,
+            @Local SectionPos origin,
             @Local(ordinal = 0) int offsetX,
             @Local(ordinal = 1) int offsetZ
     ) {
@@ -128,17 +129,9 @@ public class RenderChunkBorderMixin {
             return defaultColor;
         }
 
-        int chunkX = Math.floorDiv((int) Math.floor(originBlockX + offsetX), 16);
-        int chunkZ = Math.floorDiv((int) Math.floor(originBlockZ + offsetZ), 16);
+        int chunkX = Math.floorDiv(origin.minBlockX() + offsetX, 16);
+        int chunkZ = Math.floorDiv(origin.minBlockZ() + offsetZ, 16);
         TerritoryData territory = RelationResolver.getTerritoryAtChunk(chunkX, chunkZ);
-
-        long now = System.nanoTime();
-        if (now - aechronisHitboxes$lastPillarLogNanos > 1_000_000_000L) {
-            aechronisHitboxes$lastPillarLogNanos = now;
-            AechronisHitboxes.LOGGER.info(
-                    "Pillar chunk=[{}, {}] territory={}",
-                    chunkX, chunkZ, territory == null ? "none" : territory.getId());
-        }
 
         if (territory == null) {
             return defaultColor;

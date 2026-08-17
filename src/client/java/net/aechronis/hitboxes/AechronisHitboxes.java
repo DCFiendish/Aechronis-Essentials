@@ -39,14 +39,12 @@ public class AechronisHitboxes implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        LOGGER.info("AechronisHitboxes initializing.");
         AutoConfig.register(ModConfig.class, GsonConfigSerializer::new);
         config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             var serverData = client.getCurrentServer();
             String serverAddress = serverData != null ? serverData.ip : null;
-            LOGGER.info("JOIN event fired: serverData={}, serverAddress={}", serverData, serverAddress);
             String mapLink = serverAddress == null ? null : resolveMapLink(serverAddress);
             if (mapLink == null) {
                 LOGGER.info("Not connected to an allowed Aechronis server (address={}), mod inactive.", serverAddress);
