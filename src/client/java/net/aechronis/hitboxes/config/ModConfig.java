@@ -25,7 +25,7 @@ public class ModConfig implements ConfigData {
     @ConfigEntry.Category(value = "general")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-    public int alpha = 10;
+    public int alpha = 0;
 
     @ConfigEntry.Gui.PrefixText
     @ConfigEntry.Category(value = "players")
@@ -91,10 +91,6 @@ public class ModConfig implements ConfigData {
 
     @ConfigEntry.Category(value = "aechronis")
     @ConfigEntry.Gui.Tooltip
-    public String mapLink = "https://map.aechronis.net";
-
-    @ConfigEntry.Category(value = "aechronis")
-    @ConfigEntry.Gui.Tooltip
     public boolean autoTSpawn = false;
 
     public static class MiscEntityDropdown {
@@ -135,7 +131,7 @@ public class ModConfig implements ConfigData {
         public int color = 0xFFFFFF;
 
         @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-        public int alpha = 10;
+        public int alpha = 0;
 
         public boolean renderStuck = false;
     }
@@ -147,7 +143,7 @@ public class ModConfig implements ConfigData {
         public int color = 0xFFFFFF;
 
         @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-        public int alpha = 10;
+        public int alpha = 0;
     }
 
     public static class MiscEntity {
@@ -155,7 +151,7 @@ public class ModConfig implements ConfigData {
         public int color = 0xFFFFFF;
 
         @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-        public int alpha = 10;
+        public int alpha = 0;
     }
 
     public static class EnderDragonEntity {
@@ -167,7 +163,7 @@ public class ModConfig implements ConfigData {
         public int color = 0xFFFFFF;
 
         @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-        public int alpha = 10;
+        public int alpha = 0;
     }
 
     public static class PlayerSingleConfig {
@@ -175,7 +171,7 @@ public class ModConfig implements ConfigData {
         public int color = 0xFFFFFF;
 
         @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-        public int alpha = 10;
+        public int alpha = 0;
     }
 
     public static class PlayerListConfig {
@@ -192,7 +188,7 @@ public class ModConfig implements ConfigData {
         public int color;
 
         @ConfigEntry.BoundedDiscrete(max = 10, min = 0)
-        public int alpha = 10;
+        public int alpha = 0;
     }
 
     public static class TeamColourPicker {

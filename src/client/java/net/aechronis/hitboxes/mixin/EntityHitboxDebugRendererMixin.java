@@ -22,7 +22,9 @@ import java.awt.Color;
  * <p>
  * Only the first GizmoStyle.stroke(int) call in showHitboxes (the main entity box) is
  * targeted - the second one (the mount/vehicle marker box) keeps vanilla's fixed yellow,
- * matching upstream's unconfigurable mount-marker color.
+ * matching upstream's unconfigurable mount-marker color. Vanilla also draws its own hardcoded,
+ * fully opaque red eye-height slab for every LivingEntity later in the same method - that one
+ * is untouched deliberately, matching vanilla's own debug-hitbox behavior.
  */
 @Mixin(EntityHitboxDebugRenderer.class)
 public class EntityHitboxDebugRendererMixin {

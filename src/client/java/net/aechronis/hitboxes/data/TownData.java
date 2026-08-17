@@ -5,8 +5,12 @@ public class TownData {
     private final String name;
     private final int[] territories;
 
-    /** Resolved by AechronisDataFetcher after all data sets are loaded. */
-    NationData nation;
+    /**
+     * Resolved by AechronisDataFetcher after all data sets are loaded, on a background fetch
+     * thread; read from the render thread via RelationResolver/ColorUtil - volatile so a write
+     * here is guaranteed visible without needing another synchronization point in between.
+     */
+    volatile NationData nation;
 
     public TownData(String name, int[] territories) {
         this.name = name;

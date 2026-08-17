@@ -1,5 +1,6 @@
 package net.aechronis.hitboxes.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.aechronis.hitboxes.config.ModConfig;
 import net.aechronis.hitboxes.data.NodeRelation;
@@ -8,6 +9,7 @@ import net.aechronis.hitboxes.data.TerritoryData;
 import net.aechronis.hitboxes.hitbox.ColorUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.debug.ChunkBorderRenderer;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.level.ChunkPos;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -78,5 +80,62 @@ public class RenderChunkBorderMixin {
     )
     private int aechronisHitboxes$overrideYellow() {
         return aechronisHitboxes$computeColor(0xFFFFFF00);
+    }
+
+    // MAJOR_LINES is the color emitGizmos actually uses for most of the grid (six call sites,
+    // vs three each for CELL_BORDER/YELLOW above) - without this redirect the vast majority of
+    // the F3+G grid stayed vanilla-colored. Default matches vanilla's own
+    // ARGB.colorFromFloat(1F, 0.25F, 0.25F, 1F).
+    @Redirect(
+            method = "emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V",
+            at = @At(
+                    value = "FIELD",
+                    opcode = Opcodes.GETSTATIC,
+                    target = "Lnet/minecraft/client/renderer/debug/ChunkBorderRenderer;MAJOR_LINES:I"
+            )
+    )
+    private int aechronisHitboxes$overrideMajorLines() {
+        return aechronisHitboxes$computeColor(0xFF3F3FFF);
+    }
+
+    // The corner-pillar lines drawn around (not just at) the player's chunk aren't sourced from
+    // any of the three static fields above - they're computed inline via a single
+    // ARGB.colorFromFloat(0.5F, 1F, 0F, 0F) call per pillar, with no field to @Redirect a
+    // GETSTATIC against. Redirecting that call instead, and - unlike the other three redirects,
+    // which reuse the player's own current chunk - resolving each pillar's own chunk from its
+    // local grid offset, since these pillars span several chunks around the player, not just one.
+    @Redirect(
+            method = "emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/util/ARGB;colorFromFloat(FFFF)I"
+            )
+    )
+    private int aechronisHitboxes$overrideCornerPillar(
+            float alpha, float red, float green, float blue,
+            @Local(ordinal = 0) double originBlockX,
+            @Local(ordinal = 1) double originBlockZ,
+            @Local(ordinal = 0) int offsetX,
+            @Local(ordinal = 1) int offsetZ
+    ) {
+        int defaultColor = ARGB.colorFromFloat(alpha, red, green, blue);
+
+        ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+        if (!config.autoChunkBorders) {
+            return defaultColor;
+        }
+
+        int chunkX = Math.floorDiv((int) Math.floor(originBlockX + offsetX), 16);
+        int chunkZ = Math.floorDiv((int) Math.floor(originBlockZ + offsetZ), 16);
+        TerritoryData territory = RelationResolver.getTerritoryAtChunk(chunkX, chunkZ);
+
+        if (territory == null) {
+            return defaultColor;
+        }
+
+        NodeRelation relation = RelationResolver.getRelationToTerritory(territory);
+        int hexColour = ColorUtil.getHexFromRelation(relation, defaultColor);
+
+        return (0xFF << 24) | (hexColour & 0xFFFFFF);
     }
 }

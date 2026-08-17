@@ -27,8 +27,8 @@ public final class RelationResolver {
     private static NodeRelation resolve(ResidentData client, ResidentData target) {
         if (client == null || target == null) return NodeRelation.NEUTRAL;
 
-        String clientNationName = client.getNation();
-        String targetNationName = target.getNation();
+        String clientNationName = effectiveNationName(client);
+        String targetNationName = effectiveNationName(target);
         if (clientNationName == null || targetNationName == null) return NodeRelation.NEUTRAL;
 
         if (clientNationName.equals(targetNationName)) {
@@ -62,7 +62,7 @@ public final class RelationResolver {
         NationData territoryNation = territory.getNation();
         if (client == null || territoryNation == null) return NodeRelation.NEUTRAL;
 
-        String clientNationName = client.getNation();
+        String clientNationName = effectiveNationName(client);
         if (clientNationName == null) return NodeRelation.NEUTRAL;
 
         NodeRelation relation;
@@ -93,5 +93,20 @@ public final class RelationResolver {
 
     public static TerritoryData getTerritoryAtChunk(int chunkX, int chunkZ) {
         return AechronisDataFetcher.getTerritoryAtChunk(chunkX, chunkZ);
+    }
+
+    /**
+     * A resident's own "nation" field can be stale/unset even when their town is actually in a
+     * nation (observed against a Nodes fork where residents.nation didn't get backfilled after
+     * their town joined a nation) - fall back to the resident's town's nation link, which is
+     * derived straight from the authoritative nations->towns list.
+     */
+    private static String effectiveNationName(ResidentData resident) {
+        String nation = resident.getNation();
+        if (nation != null) return nation;
+
+        TownData town = AechronisDataFetcher.getTown(resident.getTown());
+        NationData townNation = town != null ? town.getNation() : null;
+        return townNation != null ? townNation.getName() : null;
     }
 }

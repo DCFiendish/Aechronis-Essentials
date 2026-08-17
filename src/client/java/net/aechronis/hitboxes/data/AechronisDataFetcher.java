@@ -5,8 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.aechronis.hitboxes.AechronisHitboxes;
-import net.aechronis.hitboxes.config.ModConfig;
-import me.shedaniel.autoconfig.AutoConfig;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -48,11 +46,14 @@ public class AechronisDataFetcher {
     private static volatile Map<Long, TerritoryData> territoryByChunk = Map.of();
 
     private static String clientUuid = null;
+    private static String mapLink = null;
 
     private static ScheduledExecutorService scheduler;
     private static boolean initialized = false;
 
-    public static synchronized void initialize() {
+    public static synchronized void initialize(String mapLinkBase) {
+        mapLink = mapLinkBase;
+
         if (initialized) {
             refreshTowns();
             refreshWorld();
@@ -78,13 +79,8 @@ public class AechronisDataFetcher {
         clientUuid = uuid;
     }
 
-    private static String mapLink() {
-        ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
-        return config.mapLink;
-    }
-
     public static void refreshTowns() {
-        fetchJson(mapLink() + "/nodes/towns.json").thenAccept(root -> {
+        fetchJson(mapLink + "/nodes/towns.json").thenAccept(root -> {
             if (root == null) return;
             try {
                 Map<String, ResidentData> residents = parseResidents(root);
@@ -97,6 +93,9 @@ public class AechronisDataFetcher {
                 residentsByUuid = residents;
                 townsByName = towns;
                 nationsByName = nations;
+                AechronisHitboxes.LOGGER.info(
+                        "Loaded towns.json: {} towns, {} nations, {} residents",
+                        towns.size(), nations.size(), residents.size());
             } catch (Exception e) {
                 AechronisHitboxes.LOGGER.error("Failed to parse towns.json", e);
             }
@@ -104,7 +103,7 @@ public class AechronisDataFetcher {
     }
 
     public static void refreshWorld() {
-        fetchJson(mapLink() + "/nodes/world.json").thenAccept(root -> {
+        fetchJson(mapLink + "/nodes/world.json").thenAccept(root -> {
             if (root == null) return;
             try {
                 Map<Integer, TerritoryData> territories = parseTerritories(root);
@@ -112,6 +111,7 @@ public class AechronisDataFetcher {
 
                 territoriesById = territories;
                 territoryByChunk = buildChunkIndex(territories);
+                AechronisHitboxes.LOGGER.info("Loaded world.json: {} territories", territories.size());
             } catch (Exception e) {
                 AechronisHitboxes.LOGGER.error("Failed to parse world.json", e);
             }
@@ -159,7 +159,7 @@ public class AechronisDataFetcher {
         for (Map.Entry<String, JsonElement> entry : residentsJson.entrySet()) {
             String uuid = entry.getKey();
             JsonObject obj = entry.getValue().getAsJsonObject();
-            String name = obj.has("name") ? obj.get("name").getAsString() : null;
+            String name = nullableString(obj, "name");
             String town = nullableString(obj, "town");
             String nation = nullableString(obj, "nation");
             residents.put(uuid, new ResidentData(uuid, name, town, nation));
@@ -216,7 +216,7 @@ public class AechronisDataFetcher {
         JsonObject territoriesJson = root.getAsJsonObject("territories");
         for (Map.Entry<String, JsonElement> entry : territoriesJson.entrySet()) {
             JsonObject obj = entry.getValue().getAsJsonObject();
-            if (!obj.has("chunks") || !obj.has("core")) continue;
+            if (!obj.has("chunks")) continue;
 
             int id;
             try {
@@ -226,9 +226,8 @@ public class AechronisDataFetcher {
             }
 
             int[] chunks = intArray(obj.getAsJsonArray("chunks"));
-            int[] core = intArray(obj.getAsJsonArray("core"));
 
-            territories.put(id, new TerritoryData(id, core, chunks));
+            territories.put(id, new TerritoryData(id, chunks));
         }
         return territories;
     }
@@ -318,6 +317,10 @@ public class AechronisDataFetcher {
 
     static NationData getNation(String name) {
         return name == null ? null : nationsByName.get(name);
+    }
+
+    static TownData getTown(String name) {
+        return name == null ? null : townsByName.get(name);
     }
 
     static TerritoryData getTerritoryAtChunk(int chunkX, int chunkZ) {

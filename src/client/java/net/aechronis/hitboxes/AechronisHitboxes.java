@@ -10,10 +10,22 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+
 public class AechronisHitboxes implements ClientModInitializer {
 
     public static final String MOD_ID = "aechronishitboxes";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    /**
+     * Servers this build is allowed to activate on, and each one's Nodes map data source.
+     * Deliberately hardcoded rather than config-driven - pointing the mod at an arbitrary
+     * server/URL is a release-time decision, not a runtime one, so adding a new server means
+     * cutting a new release, not editing a config file.
+     */
+    private static final Map<String, String> SERVER_MAP_LINKS = Map.of(
+            "aechronis.net", "https://map.aechronis.net"
+    );
 
     public static ModConfig config;
 
@@ -33,14 +45,17 @@ public class AechronisHitboxes implements ClientModInitializer {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             var serverData = client.getCurrentServer();
             String serverAddress = serverData != null ? serverData.ip : null;
-            if (serverAddress == null || !serverAddress.toLowerCase().contains("aechronis.net")) {
+            String mapLink = serverAddress == null ? null : resolveMapLink(serverAddress);
+            if (mapLink == null) {
+                LOGGER.info("Not connected to an allowed Aechronis server (address={}), mod inactive.", serverAddress);
                 return;
             }
 
+            LOGGER.info("Connected to Aechronis server (address={}), mod active.", serverAddress);
             if (client.player != null) {
                 AechronisDataFetcher.setClientUuid(client.player.getStringUUID());
             }
-            AechronisDataFetcher.initialize();
+            AechronisDataFetcher.initialize(mapLink);
         });
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, sender) -> wasDead = false);
@@ -59,5 +74,16 @@ public class AechronisHitboxes implements ClientModInitializer {
                 }
             }
         });
+    }
+
+    /** Map link for the first hardcoded host substring found in the server address, or null. */
+    private static String resolveMapLink(String serverAddress) {
+        String lowerAddress = serverAddress.toLowerCase();
+        for (Map.Entry<String, String> entry : SERVER_MAP_LINKS.entrySet()) {
+            if (lowerAddress.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 }
