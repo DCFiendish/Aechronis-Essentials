@@ -46,7 +46,7 @@ public class AechronisDataFetcher {
     private static volatile Map<Long, TerritoryData> territoryByChunk = Map.of();
 
     private static String clientUuid = null;
-    private static String mapLink = null;
+    private static volatile String mapLink = null;
 
     private static ScheduledExecutorService scheduler;
     private static boolean initialized = false;

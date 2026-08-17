@@ -2,6 +2,7 @@ package net.aechronis.hitboxes.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import me.shedaniel.autoconfig.AutoConfig;
+import net.aechronis.hitboxes.AechronisHitboxes;
 import net.aechronis.hitboxes.config.ModConfig;
 import net.aechronis.hitboxes.data.NodeRelation;
 import net.aechronis.hitboxes.data.RelationResolver;
@@ -32,6 +33,8 @@ public class RenderChunkBorderMixin {
     private TerritoryData aechronisHitboxes$lastTerritory;
     @Unique
     private ChunkPos aechronisHitboxes$lastChunk;
+    @Unique
+    private long aechronisHitboxes$lastPillarLogNanos = 0L;
 
     @Unique
     private int aechronisHitboxes$computeColor(int defaultColor) {
@@ -128,6 +131,14 @@ public class RenderChunkBorderMixin {
         int chunkX = Math.floorDiv((int) Math.floor(originBlockX + offsetX), 16);
         int chunkZ = Math.floorDiv((int) Math.floor(originBlockZ + offsetZ), 16);
         TerritoryData territory = RelationResolver.getTerritoryAtChunk(chunkX, chunkZ);
+
+        long now = System.nanoTime();
+        if (now - aechronisHitboxes$lastPillarLogNanos > 1_000_000_000L) {
+            aechronisHitboxes$lastPillarLogNanos = now;
+            AechronisHitboxes.LOGGER.info(
+                    "Pillar chunk=[{}, {}] territory={}",
+                    chunkX, chunkZ, territory == null ? "none" : territory.getId());
+        }
 
         if (territory == null) {
             return defaultColor;
