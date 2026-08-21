@@ -1,3 +1,4 @@
+not helpful anymore cuz the aechronis devs are tryhards
 # Aechronis Essentials
 
 A Fabric client mod for Minecraft 26.2 that colors player and entity hitboxes by
